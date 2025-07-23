@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia General Motors - ¡FUNCIONANDO!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 50px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid #2ecc71;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            margin: 10px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Trivia General Motors</h1>
+        
+        <div class="success">
+            <h2>🎉 ¡DEPLOYMENT EXITOSO!</h2>
+            <p>La aplicación está funcionando correctamente</p>
+        </div>
+        
+        <p><strong>Características del juego:</strong></p>
+        <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
+            <li>✅ 15 preguntas sobre General Motors</li>
+            <li>✅ Historia de GM en Norteamérica y México</li>
+            <li>✅ Panel de administrador</li>
+            <li>✅ Sistema de puntuación</li>
+            <li>✅ Cupón digital Hummer EV para el ganador</li>
+        </ul>
+        
+        <div style="margin-top: 40px;">
+            <h3>🚀 Estado: ACTIVO</h3>
+            <p>Plataforma: Netlify</p>
+            <p>Fecha: <span id="date"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('date').textContent = new Date().toLocaleString('es-MX');
+    </script>
+</body>
+</html>
