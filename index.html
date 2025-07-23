@@ -481,15 +481,12 @@
                     <button class="btn" onclick="adminLogin()">Acceder</button>
                     <button class="btn" onclick="showWelcome()">Volver</button>
                     
-                    <div style="margin-top: 2rem; padding: 1rem; background: rgba(52, 152, 219, 0.2); border-radius: 10px; text-align: left;">
-                        <h4>📋 Importante - Limitación Actual:</h4>
-                        <p style="margin: 0.5rem 0;">Por limitaciones técnicas, los datos se guardan localmente en cada navegador.</p>
-                        <p style="margin: 0.5rem 0;"><strong>Para ver jugadores de otros dispositivos:</strong></p>
-                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                            <li>Usa el mismo navegador en ambos dispositivos</li>
-                            <li>O sincroniza los navegadores con la misma cuenta</li>
-                        </ul>
-                        <p style="margin: 0.5rem 0; font-size: 0.9rem; opacity: 0.8;">Los datos se mantienen en el dispositivo donde se jugó.</p>
+                    <div style="margin-top: 2rem; padding: 1rem; background: rgba(46, 204, 113, 0.2); border-radius: 10px; text-align: left;">
+                        <h4>🏆 Sistema de Premios Híbrido:</h4>
+                        <p style="margin: 0.5rem 0;"><strong>🎁 Cupón Premium:</strong> Solo para el #1 del leaderboard con 10+ respuestas correctas</p>
+                        <p style="margin: 0.5rem 0;"><strong>🎟️ Cupón Participación:</strong> Para cualquier jugador con 10+ respuestas correctas</p>
+                        <p style="margin: 0.5rem 0;"><strong>📊 Sincronización:</strong> Los datos se comparten automáticamente entre todos los dispositivos gracias a Firebase</p>
+                        <p style="margin: 0.5rem 0; font-size: 0.9rem; opacity: 0.8;">¡El sistema ahora funciona cross-device en tiempo real!</p>
                     </div>
                 </div>
                 
@@ -839,27 +836,52 @@
                 // Mostrar puntuación final y respuestas correctas
                 document.getElementById('finalScore').textContent = currentPlayer.score;
                 
-                // Nueva lógica: Cupón solo para 10+ respuestas correctas
+                // Sistema Híbrido: Cupón Premium para #1 + Cupón Participación para 10+ correctas
                 const winnerSection = document.getElementById('winnerSection');
-                if (currentPlayer.correctAnswers >= 10) {
+                
+                // Determinar si es el jugador #1 del leaderboard
+                const currentPlayerPosition = allPlayers.findIndex(p => 
+                    p.name === currentPlayer.name && p.score === currentPlayer.score
+                ) + 1;
+                
+                const isTopPlayer = currentPlayerPosition === 1;
+                const hasGoodScore = currentPlayer.correctAnswers >= 10;
+                
+                if (isTopPlayer && hasGoodScore) {
+                    // Cupón PREMIUM para el #1 con 10+ correctas
                     winnerSection.style.display = 'block';
-                    // Actualizar el cupón con información específica
                     winnerSection.innerHTML = `
-                        <div class="coupon">
-                            <h3>🎉 ¡FELICIDADES!</h3>
-                            <p>Has ganado un cupón digital para el Hummer EV</p>
-                            <p><strong>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</strong></p>
-                            <p><strong>Código:</strong> HUMMER-EV-2024</p>
-                            <p><small>Válido hasta diciembre 2024</small></p>
+                        <div class="coupon" style="background: linear-gradient(45deg, #f39c12, #e67e22); border: 3px solid #f1c40f;">
+                            <h3>� ¡CAMPEÓN ABSOLUTO!</h3>
+                            <p><strong>¡Eres el #1 del leaderboard!</strong></p>
+                            <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
+                            <p><strong>🎁 CUPÓN PREMIUM HUMMER EV</strong></p>
+                            <p><strong>Código:</strong> HUMMER-CHAMPION-2024</p>
+                            <p><small>Cupón premium válido hasta diciembre 2024</small></p>
+                        </div>
+                    `;
+                } else if (hasGoodScore) {
+                    // Cupón de PARTICIPACIÓN para 10+ correctas
+                    winnerSection.style.display = 'block';
+                    winnerSection.innerHTML = `
+                        <div class="coupon" style="background: linear-gradient(45deg, #27ae60, #2ecc71); border: 3px dashed white;">
+                            <h3>🎉 ¡EXCELENTE RESULTADO!</h3>
+                            <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
+                            <p><strong>Posición en leaderboard: #${currentPlayerPosition}</strong></p>
+                            <p><strong>🎟️ CUPÓN DE PARTICIPACIÓN HUMMER EV</strong></p>
+                            <p><strong>Código:</strong> HUMMER-PARTICIPANT-2024</p>
+                            <p><small>Cupón de participación válido hasta diciembre 2024</small></p>
                         </div>
                     `;
                 } else {
+                    // Sin cupón
                     winnerSection.style.display = 'block';
                     winnerSection.innerHTML = `
                         <div style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); padding: 2rem; border-radius: 15px; margin: 2rem 0; border: 3px dashed white;">
                             <h3>🎈 ¡Gracias por participar!</h3>
                             <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
-                            <p><strong>Necesitas 10+ respuestas correctas para el cupón Hummer EV</strong></p>
+                            <p><strong>Posición en leaderboard: #${currentPlayerPosition}</strong></p>
+                            <p><strong>Necesitas 10+ respuestas correctas para el cupón</strong></p>
                             <p><small>¡Inténtalo de nuevo para mejorar tu resultado!</small></p>
                         </div>
                     `;
@@ -900,26 +922,52 @@
                 // Mostrar puntuación final
                 document.getElementById('finalScore').textContent = currentPlayer.score;
                 
-                // Nueva lógica: Cupón basado en respuestas correctas
+                // Sistema Híbrido: Cupón Premium para #1 + Cupón Participación para 10+ correctas
                 const winnerSection = document.getElementById('winnerSection');
-                if (currentPlayer.correctAnswers >= 10) {
+                
+                // Determinar posición en el leaderboard
+                const currentPlayerPosition = allPlayers.findIndex(p => 
+                    p.name === currentPlayer.name && p.score === currentPlayer.score
+                ) + 1;
+                
+                const isTopPlayer = currentPlayerPosition === 1 && allPlayers.length > 0;
+                const hasGoodScore = currentPlayer.correctAnswers >= 10;
+                
+                if (isTopPlayer && hasGoodScore) {
+                    // Cupón PREMIUM para el #1 con 10+ correctas
                     winnerSection.style.display = 'block';
                     winnerSection.innerHTML = `
-                        <div class="coupon">
-                            <h3>🎉 ¡FELICIDADES!</h3>
-                            <p>Has ganado un cupón digital para el Hummer EV</p>
-                            <p><strong>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</strong></p>
-                            <p><strong>Código:</strong> HUMMER-EV-2024</p>
-                            <p><small>Válido hasta diciembre 2024</small></p>
+                        <div class="coupon" style="background: linear-gradient(45deg, #f39c12, #e67e22); border: 3px solid #f1c40f;">
+                            <h3>� ¡CAMPEÓN ABSOLUTO!</h3>
+                            <p><strong>¡Eres el #1 del leaderboard!</strong></p>
+                            <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
+                            <p><strong>🎁 CUPÓN PREMIUM HUMMER EV</strong></p>
+                            <p><strong>Código:</strong> HUMMER-CHAMPION-2024</p>
+                            <p><small>Cupón premium válido hasta diciembre 2024</small></p>
+                        </div>
+                    `;
+                } else if (hasGoodScore) {
+                    // Cupón de PARTICIPACIÓN para 10+ correctas
+                    winnerSection.style.display = 'block';
+                    winnerSection.innerHTML = `
+                        <div class="coupon" style="background: linear-gradient(45deg, #27ae60, #2ecc71); border: 3px dashed white;">
+                            <h3>🎉 ¡EXCELENTE RESULTADO!</h3>
+                            <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
+                            <p><strong>Posición en leaderboard: #${currentPlayerPosition}</strong></p>
+                            <p><strong>🎟️ CUPÓN DE PARTICIPACIÓN HUMMER EV</strong></p>
+                            <p><strong>Código:</strong> HUMMER-PARTICIPANT-2024</p>
+                            <p><small>Cupón de participación válido hasta diciembre 2024</small></p>
                         </div>
                     `;
                 } else {
+                    // Sin cupón - Necesita mejorar
                     winnerSection.style.display = 'block';
                     winnerSection.innerHTML = `
                         <div style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); padding: 2rem; border-radius: 15px; margin: 2rem 0; border: 3px dashed white;">
                             <h3>🎈 ¡Gracias por participar!</h3>
                             <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
-                            <p><strong>Necesitas 10+ respuestas correctas para el cupón Hummer EV</strong></p>
+                            <p><strong>Posición en leaderboard: #${currentPlayerPosition}</strong></p>
+                            <p><strong>Necesitas 10+ respuestas correctas para el cupón</strong></p>
                             <p><small>¡Inténtalo de nuevo para mejorar tu resultado!</small></p>
                         </div>
                     `;
@@ -1002,11 +1050,22 @@
                         
                         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
                         
+                        // Determinar tipo de premio
+                        let prizeStatus = '';
+                        if (index === 0 && (player.correctAnswers >= 10)) {
+                            prizeStatus = '<small style="color: #f1c40f;">🏆 CAMPEÓN</small>';
+                        } else if (player.correctAnswers >= 10) {
+                            prizeStatus = '<small style="color: #27ae60;">🎟️ CUPÓN PARTICIPACIÓN</small>';
+                        } else {
+                            prizeStatus = '<small style="color: #95a5a6;">Participante</small>';
+                        }
+                        
                         playerDiv.innerHTML = `
                             <span>${medal} ${player.avatar || '🚗'} ${player.name || 'Jugador'} ${isCurrentPlayer ? '(TÚ)' : ''}</span>
                             <div style="text-align: right;">
                                 <div>${player.score || 0} pts</div>
                                 <small style="opacity: 0.7;">${player.correctAnswers || 0}/15 correctas</small>
+                                <div>${prizeStatus}</div>
                             </div>
                         `;
                         leaderboardDiv.appendChild(playerDiv);
@@ -1093,6 +1152,16 @@
                     
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
                     
+                    // Determinar tipo de premio para admin
+                    let adminPrizeStatus = '';
+                    if (index === 0 && (player.correctAnswers >= 10)) {
+                        adminPrizeStatus = '<small style="color: #f1c40f;">🏆 CAMPEÓN PREMIUM</small>';
+                    } else if (player.correctAnswers >= 10) {
+                        adminPrizeStatus = '<small style="color: #27ae60;">🎟️ CUPÓN PARTICIPACIÓN</small>';
+                    } else {
+                        adminPrizeStatus = '<small style="color: #95a5a6;">Sin cupón</small>';
+                    }
+                    
                     playerDiv.innerHTML = `
                         <div>
                             <span>${medal} ${player.avatar || '🚗'} ${player.name || 'Jugador'}</span>
@@ -1103,7 +1172,7 @@
                         <div style="text-align: right;">
                             <div style="font-weight: bold;">${player.score || 0} pts</div>
                             <small>${player.correctAnswers || 0}/15 correctas</small>
-                            ${(player.correctAnswers >= 10) ? '<small style="color: #f39c12;">🏆 GANADOR</small>' : '<small style="color: #95a5a6;">Participante</small>'}
+                            ${adminPrizeStatus}
                         </div>
                     `;
                     adminLeaderboard.appendChild(playerDiv);
