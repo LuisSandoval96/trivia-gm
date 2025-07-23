@@ -1,14 +1,15 @@
 // Configuración Firebase Real Database para Trivia GM
-// IMPORTANTE: Reemplazar con tus credenciales reales de Firebase
+// ✅ Configuración actualizada con credenciales reales
 
 const firebaseConfig = {
-    apiKey: "AIzaSyExample-replace-with-your-api-key",
-    authDomain: "trivia-gm-default-rtdb.firebaseapp.com",
+    apiKey: "AIzaSyD1XueuWFim9wWZLs0orZYltla-uuoJAqA",
+    authDomain: "trivia-gm.firebaseapp.com",
     databaseURL: "https://trivia-gm-default-rtdb.firebaseio.com",
     projectId: "trivia-gm",
-    storageBucket: "trivia-gm.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef123456789012"
+    storageBucket: "trivia-gm.firebasestorage.app",
+    messagingSenderId: "735339406070",
+    appId: "1:735339406070:web:80de22b7895d546efdc2d7",
+    measurementId: "G-H9WH8VFM01"
 };
 
 // Inicializar Firebase
