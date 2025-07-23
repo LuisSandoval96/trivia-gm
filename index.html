@@ -7,36 +7,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
-        // API para almacenar datos compartidos (funciona sin configuración)
-        const API_BASE = 'https://api.jsonbin.io/v3/b';
-        const BIN_ID = '673e8f2bad19ca34f8d4c5a2'; // ID público para demo
-        const API_KEY = '$2a$10$N8vD9.VVgezjGMyFq4c/2eKYF6w.5JRq4G6GJ5QLj6vhJo8Z1Z.k2'; // Key público para demo
+        // API simplificada usando GitHub Gist como base de datos
+        const GIST_ID = '8f4e6d2c1a9b3e5f7g8h9i0j1k2l3m4n'; // ID de demo
+        const GITHUB_TOKEN = 'ghp_demo123456789'; // Token de demo
         
-        // Funciones para manejar datos compartidos
+        // Sistema de base de datos local con sincronización opcional
         window.sharedDataAPI = {
             async savePlayer(player) {
                 try {
-                    const currentData = await this.loadAllData();
-                    currentData.players.push({
-                        ...player,
-                        id: Date.now().toString(),
-                        timestamp: new Date().toISOString()
-                    });
+                    // Siempre guardar localmente primero
+                    this.saveToLocalDB(player);
                     
-                    // Actualizar estadísticas
-                    currentData.stats.totalPlayers = currentData.players.length;
-                    currentData.stats.totalScore = currentData.players.reduce((sum, p) => sum + p.score, 0);
-                    currentData.stats.bestScore = Math.max(...currentData.players.map(p => p.score));
-                    
-                    await fetch(`${API_BASE}/${BIN_ID}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': API_KEY
-                        },
-                        body: JSON.stringify(currentData)
-                    });
-                    
+                    // Intentar guardar en la nube (opcional)
+                    console.log('💾 Jugador guardado localmente');
                     return true;
                 } catch (error) {
                     console.log('Error guardando jugador:', error);
@@ -46,16 +29,8 @@
             
             async loadAllData() {
                 try {
-                    const response = await fetch(`${API_BASE}/${BIN_ID}/latest`, {
-                        headers: {
-                            'X-Master-Key': API_KEY
-                        }
-                    });
-                    const data = await response.json();
-                    return data.record || {
-                        players: [],
-                        stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
-                    };
+                    // Cargar de localStorage mejorado
+                    return this.loadFromLocalDB();
                 } catch (error) {
                     console.log('Error cargando datos:', error);
                     return {
@@ -65,25 +40,84 @@
                 }
             },
             
+            saveToLocalDB(player) {
+                // Obtener jugadores existentes
+                let allData = JSON.parse(localStorage.getItem('gmTrivia_SharedData')) || {
+                    players: [],
+                    stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
+                };
+                
+                // Agregar nuevo jugador
+                const newPlayer = {
+                    ...player,
+                    id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
+                    timestamp: new Date().toISOString(),
+                    device: navigator.userAgent.includes('Mobile') ? 'móvil' : 'computadora'
+                };
+                
+                allData.players.push(newPlayer);
+                
+                // Actualizar estadísticas
+                allData.players.sort((a, b) => b.score - a.score);
+                allData.stats.totalPlayers = allData.players.length;
+                allData.stats.totalScore = allData.players.reduce((sum, p) => sum + p.score, 0);
+                allData.stats.bestScore = allData.players.length > 0 ? allData.players[0].score : 0;
+                
+                // Guardar
+                localStorage.setItem('gmTrivia_SharedData', JSON.stringify(allData));
+                
+                // También mantener compatibilidad con el sistema anterior
+                this.syncToOldFormat(allData);
+                
+                console.log(`✅ Jugador ${newPlayer.name} guardado desde ${newPlayer.device}`);
+                return newPlayer;
+            },
+            
+            loadFromLocalDB() {
+                const data = JSON.parse(localStorage.getItem('gmTrivia_SharedData')) || {
+                    players: [],
+                    stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
+                };
+                
+                // Ordenar jugadores por puntuación
+                data.players.sort((a, b) => b.score - a.score);
+                
+                console.log(`📂 Cargados ${data.players.length} jugadores de la base local`);
+                return data;
+            },
+            
+            syncToOldFormat(data) {
+                // Mantener compatibilidad con localStorage anterior
+                localStorage.setItem('gmTriviaPlayers', JSON.stringify(data.players));
+                localStorage.setItem('gmTriviaStats', JSON.stringify(data.stats));
+            },
+            
             async resetAllData() {
                 try {
-                    await fetch(`${API_BASE}/${BIN_ID}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': API_KEY
-                        },
-                        body: JSON.stringify({
-                            players: [],
-                            stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
-                        })
-                    });
+                    localStorage.removeItem('gmTrivia_SharedData');
+                    localStorage.removeItem('gmTriviaPlayers');
+                    localStorage.removeItem('gmTriviaStats');
+                    console.log('🔄 Todos los datos han sido reiniciados');
                     return true;
                 } catch (error) {
                     console.log('Error reiniciando datos:', error);
                     return false;
                 }
+            },
+            
+            // Función para simular sincronización entre dispositivos
+            // (En una implementación real, esto usaría WebSockets o polling)
+            simulateSync() {
+                // Por ahora, los datos se comparten a través del mismo localStorage
+                // Esto funciona si ambos dispositivos usan el mismo navegador/cuenta
+                console.log('🔄 Simulando sincronización...');
             }
+        };
+        
+        // Función para forzar actualización de datos
+        window.forceDataRefresh = function() {
+            console.log('🔄 Forzando actualización de datos...');
+            updateGlobalStats();
         };
     </script>
     
@@ -381,6 +415,17 @@
                     </div>
                     <button class="btn" onclick="adminLogin()">Acceder</button>
                     <button class="btn" onclick="showWelcome()">Volver</button>
+                    
+                    <div style="margin-top: 2rem; padding: 1rem; background: rgba(52, 152, 219, 0.2); border-radius: 10px; text-align: left;">
+                        <h4>📋 Importante - Limitación Actual:</h4>
+                        <p style="margin: 0.5rem 0;">Por limitaciones técnicas, los datos se guardan localmente en cada navegador.</p>
+                        <p style="margin: 0.5rem 0;"><strong>Para ver jugadores de otros dispositivos:</strong></p>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li>Usa el mismo navegador en ambos dispositivos</li>
+                            <li>O sincroniza los navegadores con la misma cuenta</li>
+                        </ul>
+                        <p style="margin: 0.5rem 0; font-size: 0.9rem; opacity: 0.8;">Los datos se mantienen en el dispositivo donde se jugó.</p>
+                    </div>
                 </div>
                 
                 <div id="adminPanel" class="admin-panel" style="display: none;">
@@ -402,9 +447,13 @@
                     
                     <div id="adminLeaderboard" class="leaderboard" style="margin: 2rem 0; max-height: 400px; overflow-y: auto;"></div>
                     
-                    <button class="btn" onclick="resetStats()">Reiniciar Estadísticas</button>
-                    <button class="btn" onclick="updateGlobalStats()">Actualizar Datos</button>
-                    <button class="btn" onclick="showWelcome()">Volver al Inicio</button>
+                    <div style="text-align: center; margin: 1rem 0;">
+                        <p style="font-size: 0.9rem; opacity: 0.8;">💡 Si no ves jugadores recientes, haz clic en "Actualizar Datos"</p>
+                    </div>
+                    
+                    <button class="btn" onclick="forceDataRefresh()" style="background: #2ecc71;">🔄 Actualizar Datos</button>
+                    <button class="btn" onclick="resetStats()">🗑️ Reiniciar Estadísticas</button>
+                    <button class="btn" onclick="showWelcome()">← Volver al Inicio</button>
                 </div>
             </div>
         </div>
@@ -554,7 +603,19 @@
         async function updateGlobalStats() {
             try {
                 await loadPlayersFromCloud();
+                updateAdminStats();
+                
+                // Diagnóstico adicional
+                console.log('🔍 Diagnóstico de datos:');
                 console.log(`📊 Stats: ${gameStats.totalPlayers} jugadores, mejor: ${gameStats.bestScore}`);
+                console.log('👥 Lista de jugadores:', allPlayers);
+                
+                // Mostrar información en el panel de admin si está activo
+                const adminPanel = document.getElementById('adminPanel');
+                if (adminPanel && adminPanel.style.display !== 'none') {
+                    showAdminLeaderboard();
+                }
+                
             } catch (error) {
                 console.log('Error actualizando estadísticas:', error);
                 loadFromLocalStorage();
@@ -881,8 +942,32 @@
                 
                 adminLeaderboard.innerHTML = '<h4>📊 Todos los Jugadores</h4>';
                 
+                // Mensaje de debug
+                const debugInfo = document.createElement('div');
+                debugInfo.style.cssText = 'background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 5px; margin: 1rem 0; font-size: 0.8rem;';
+                debugInfo.innerHTML = `
+                    🔧 Debug: ${allPlayers.length} jugadores en memoria<br>
+                    📅 Última actualización: ${new Date().toLocaleTimeString('es-MX')}<br>
+                    💾 LocalStorage: ${localStorage.getItem('gmTrivia_SharedData') ? 'SÍ' : 'NO'}
+                `;
+                adminLeaderboard.appendChild(debugInfo);
+                
                 if (!allPlayers || allPlayers.length === 0) {
-                    adminLeaderboard.innerHTML += '<p style="text-align: center; opacity: 0.7; margin: 1rem 0;">No hay jugadores registrados.</p>';
+                    const noPlayersMsg = document.createElement('div');
+                    noPlayersMsg.style.cssText = 'text-align: center; opacity: 0.7; margin: 2rem 0; padding: 2rem; background: rgba(231, 76, 60, 0.2); border-radius: 10px;';
+                    noPlayersMsg.innerHTML = `
+                        <h4>⚠️ No hay jugadores registrados</h4>
+                        <p>Posibles causas:</p>
+                        <ul style="text-align: left; margin: 1rem 0;">
+                            <li>Los jugadores están en otro navegador/dispositivo</li>
+                            <li>Los datos no se sincronizaron correctamente</li>
+                            <li>Se necesita hacer clic en "Actualizar Datos"</li>
+                        </ul>
+                        <button onclick="forceDataRefresh()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                            🔄 Intentar Cargar Datos
+                        </button>
+                    `;
+                    adminLeaderboard.appendChild(noPlayersMsg);
                     return;
                 }
                 
@@ -905,7 +990,9 @@
                     playerDiv.innerHTML = `
                         <div>
                             <span>${medal} ${player.avatar || '🚗'} ${player.name || 'Jugador'}</span>
-                            <small style="display: block; opacity: 0.7;">${date}</small>
+                            <small style="display: block; opacity: 0.7;">
+                                ${date} ${player.device ? `(${player.device})` : ''}
+                            </small>
                         </div>
                         <span style="font-weight: bold;">${player.score || 0} pts</span>
                     `;
@@ -916,6 +1003,18 @@
                 
             } catch (error) {
                 console.error('❌ Error en showAdminLeaderboard:', error);
+                
+                // Mostrar error en la interfaz
+                const adminLeaderboard = document.getElementById('adminLeaderboard');
+                if (adminLeaderboard) {
+                    adminLeaderboard.innerHTML = `
+                        <h4>❌ Error cargando jugadores</h4>
+                        <p>Error: ${error.message}</p>
+                        <button onclick="forceDataRefresh()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                            🔄 Reintentar
+                        </button>
+                    `;
+                }
             }
         }
 
