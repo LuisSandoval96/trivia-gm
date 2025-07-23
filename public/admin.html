@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Trivia General Motors</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Modal de autenticación -->
+        <div id="auth-modal" class="auth-modal">
+            <div class="auth-modal-content">
+                <h2>🔐 Acceso de Administrador</h2>
+                <p>Ingresa la contraseña para acceder al panel de administración:</p>
+                <div class="auth-form">
+                    <input type="password" id="admin-password" placeholder="Contraseña de administrador" required>
+                    <button id="login-btn" class="btn btn-primary">Ingresar</button>
+                </div>
+                <div id="auth-error" class="auth-error" style="display: none;">
+                    Contraseña incorrecta. Inténtalo de nuevo.
+                </div>
+            </div>
+        </div>
+
+        <header class="admin-header">
+            <h1>🎮 Panel de Administración - Trivia GM</h1>
+            <div class="header-stats">
+                <div class="stat">
+                    <span class="stat-label">Jugadores:</span>
+                    <span id="player-count" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Estado:</span>
+                    <span id="game-status" class="stat-value">Esperando</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <div class="admin-section">
+                <div class="control-panel">
+                    <h2>🎯 Control del Juego</h2>
+                    <div class="game-controls">
+                        <button id="start-game" class="btn btn-primary">
+                            <span>🚀 Iniciar Juego</span>
+                        </button>
+                        <button id="reset-game" class="btn btn-secondary" disabled>
+                            <span>🔄 Reiniciar</span>
+                        </button>
+                    </div>
+                    
+                    <div class="game-info">
+                        <div class="info-card">
+                            <h3>📊 Información del Juego</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>Pregunta Actual:</label>
+                                    <span id="current-question">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Total Preguntas:</label>
+                                    <span>15</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Respuestas Recibidas:</label>
+                                    <span id="answers-received">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="players-panel">
+                    <h2>👥 Jugadores Conectados</h2>
+                    <div id="players-list" class="players-list">
+                        <div class="no-players">
+                            <span>No hay jugadores conectados</span>
+                            <p>Los jugadores pueden unirse en: <strong>http://localhost:3002</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="question-display" id="question-display" style="display: none;">
+                    <h2>❓ Pregunta Actual</h2>
+                    <div class="current-question">
+                        <div class="question-header">
+                            <span class="question-counter">Pregunta <span id="display-question-number">1</span> de 15</span>
+                            <div class="question-timer">
+                                <span id="question-timer">30s</span>
+                            </div>
+                        </div>
+                        <h3 id="display-question-text"></h3>
+                        <div id="display-options" class="question-options">
+                            <!-- Opciones se mostrarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="live-stats" id="live-stats" style="display: none;">
+                    <h2>📈 Estadísticas en Vivo</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Respuestas por Opción</h3>
+                            <div id="answer-distribution" class="answer-bars">
+                                <!-- Distribución de respuestas -->
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Últimas Respuestas</h3>
+                            <div id="recent-answers" class="recent-answers">
+                                <!-- Respuestas recientes -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="leaderboard-panel">
+                    <h2>🏆 Tabla de Posiciones</h2>
+                    <div id="admin-leaderboard" class="admin-leaderboard">
+                        <div class="no-scores">
+                            <span>El juego no ha comenzado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="activity-log">
+                    <h2>📝 Registro de Actividad</h2>
+                    <div id="activity-log" class="log-container">
+                        <div class="log-entry system">
+                            <span class="log-time">[Sistema]</span>
+                            <span class="log-message">Panel de administración iniciado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="winner-announcement" class="winner-modal" style="display: none;">
+            <div class="winner-modal-content">
+                <div class="winner-animation">
+                    <div class="confetti"></div>
+                    <div class="trophy">🏆</div>
+                </div>
+                <h2>🎉 ¡TENEMOS UN GANADOR! 🎉</h2>
+                <div class="winner-info">
+                    <div class="winner-avatar">
+                        <span id="winner-avatar">🏎️</span>
+                    </div>
+                    <h3 id="winner-name">Nombre del Ganador</h3>
+                    <p class="winner-score">Puntuación: <span id="winner-score">0</span> puntos</p>
+                </div>
+                <div class="prize-info">
+                    <h4>🎁 Premio Otorgado:</h4>
+                    <p class="prize-description">Cupón para Hummer EV enviado al ganador</p>
+                </div>
+                <button id="close-winner-modal" class="btn btn-primary">Cerrar</button>
+            </div>
+        </div>
+
+        <footer class="admin-footer">
+            <p>&copy; 2025 General Motors - Sistema de Trivia Interactiva</p>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/admin.js"></script>
+</body>
+</html>

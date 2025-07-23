@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia General Motors</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏎️ Trivia General Motors</h1>
+            <p>Pon a prueba tus conocimientos sobre la historia de GM</p>
+        </header>
+
+        <main>
+            <div id="welcome-screen" class="screen active">
+                <div class="welcome-content">
+                    <div class="gm-logo">
+                        <div class="logo-circle">
+                            <span>GM</span>
+                        </div>
+                    </div>
+                    
+                    <h2>¡Bienvenido a la Trivia de General Motors!</h2>
+                    <p>15 preguntas sobre la fascinante historia de GM en Norteamérica y México</p>
+                    
+                    <div class="join-form">
+                        <input type="text" id="player-name" placeholder="Ingresa tu nombre" maxlength="20" required>
+                        
+                        <div class="avatar-selection">
+                            <p>Elige tu avatar:</p>
+                            <div class="avatars">
+                                <button class="avatar-btn active" data-avatar="🏎️">🏎️</button>
+                                <button class="avatar-btn" data-avatar="🚗">🚗</button>
+                                <button class="avatar-btn" data-avatar="🚙">🚙</button>
+                                <button class="avatar-btn" data-avatar="🏁">🏁</button>
+                                <button class="avatar-btn" data-avatar="⚡">⚡</button>
+                                <button class="avatar-btn" data-avatar="🔧">🔧</button>
+                                <button class="avatar-btn" data-avatar="🛞">🛞</button>
+                                <button class="avatar-btn" data-avatar="🌟">🌟</button>
+                            </div>
+                        </div>
+                        
+                        <button id="join-game" class="btn btn-primary">
+                            <span>Unirse al Juego</span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </div>
+                    
+                    <div class="admin-link">
+                        <a href="/admin">¿Eres administrador? Haz clic aquí</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="waiting-screen" class="screen">
+                <div class="waiting-content">
+                    <div class="loading-spinner"></div>
+                    <h2>¡Conectado!</h2>
+                    <p>Esperando a que el administrador inicie el juego...</p>
+                    <div class="player-info">
+                        <span id="player-avatar">🏎️</span>
+                        <span id="player-display-name"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-screen" class="screen">
+                <div class="game-header">
+                    <div class="question-counter">
+                        <span>Pregunta <span id="question-number">1</span> de 15</span>
+                    </div>
+                    <div class="timer">
+                        <div class="timer-circle">
+                            <span id="timer-text">30</span>
+                        </div>
+                    </div>
+                    <div class="score">
+                        <span>Puntos: <span id="current-score">0</span></span>
+                    </div>
+                </div>
+
+                <div class="question-container">
+                    <h2 id="question-text"></h2>
+                    <div id="options-container" class="options">
+                        <!-- Las opciones se generarán dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="answer-feedback" id="answer-feedback">
+                    <!-- Feedback de respuesta -->
+                </div>
+            </div>
+
+            <div id="results-screen" class="screen">
+                <div class="results-content">
+                    <h2>¡Resultados de la Pregunta!</h2>
+                    <div id="question-explanation" class="explanation"></div>
+                    <div id="leaderboard" class="leaderboard">
+                        <h3>🏆 Tabla de Posiciones</h3>
+                        <div id="leaderboard-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="final-screen" class="screen">
+                <div class="final-content">
+                    <h2>🏁 ¡Juego Terminado!</h2>
+                    <div id="final-leaderboard" class="final-leaderboard">
+                        <h3>🏆 Clasificación Final</h3>
+                        <div id="final-leaderboard-list"></div>
+                    </div>
+                    <button id="play-again" class="btn btn-secondary">Jugar de Nuevo</button>
+                </div>
+            </div>
+
+            <div id="winner-screen" class="screen winner-modal">
+                <div class="winner-content">
+                    <div class="winner-animation">
+                        <div class="confetti"></div>
+                        <div class="trophy">🏆</div>
+                    </div>
+                    <h1>¡FELICIDADES!</h1>
+                    <h2>🎉 ¡ERES EL GANADOR! 🎉</h2>
+                    
+                    <div class="prize-announcement">
+                        <div class="hummer-logo">
+                            <img src="/images/hummer-ev-logo.png" alt="Hummer EV" onerror="this.style.display='none'">
+                            <div class="hummer-text">HUMMER EV</div>
+                        </div>
+                        <p class="prize-text">Has ganado un cupón para una</p>
+                        <h3 class="prize-title">HUMMER EV</h3>
+                    </div>
+                    
+                    <div class="coupon-container">
+                        <div class="coupon">
+                            <div class="coupon-header">
+                                <span>CUPÓN DE PREMIO</span>
+                            </div>
+                            <div class="coupon-body">
+                                <div class="coupon-code">
+                                    <label>Código:</label>
+                                    <span id="coupon-code"></span>
+                                </div>
+                                <div class="coupon-details">
+                                    <p>Válido hasta: <span id="coupon-expiry"></span></p>
+                                    <p class="coupon-terms">*Sujeto a términos y condiciones</p>
+                                </div>
+                            </div>
+                            <div class="coupon-footer">
+                                <span>General Motors - Trivia Champion</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="download-coupon" class="btn btn-primary">
+                        📄 Descargar Cupón
+                    </button>
+                    
+                    <button id="close-winner" class="btn btn-secondary">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/game.js"></script>
+</body>
+</html>
