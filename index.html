@@ -285,7 +285,7 @@
                 </div>
                 
                 <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">Siguiente Pregunta</button>
-                <button class="btn" onclick="showResults()" id="finishBtn" style="display: none;">Ver Resultados</button>
+                <button class="btn" onclick="showResultsSync()" id="finishBtn" style="display: none;">Ver Resultados</button>
             </div>
         </div>
 
@@ -653,24 +653,96 @@
             loadQuestion();
         }
 
-        async function showResults() {
-            // Guardar jugador en Firebase
-            currentPlayer.id = await savePlayerToFirebase(currentPlayer);
-            
-            // Actualizar estadísticas globales
-            await updateGlobalStats();
-
-            document.getElementById('finalScore').textContent = currentPlayer.score;
-            
-            // Mostrar cupón si la puntuación es alta
-            if (currentPlayer.score >= 1000) {
-                document.getElementById('winnerSection').style.display = 'block';
+        // Función síncrona para mostrar resultados (más confiable)
+        function showResultsSync() {
+            try {
+                console.log('🏆 Mostrando resultados (modo síncrono)...');
+                
+                // Guardar en localStorage directamente
+                saveToLocalStorage(currentPlayer);
+                loadFromLocalStorage();
+                
+                // Mostrar puntuación final
+                document.getElementById('finalScore').textContent = currentPlayer.score;
+                
+                // Mostrar cupón si la puntuación es alta
+                if (currentPlayer.score >= 1000) {
+                    document.getElementById('winnerSection').style.display = 'block';
+                } else {
+                    document.getElementById('winnerSection').style.display = 'none';
+                }
+                
+                // Mostrar leaderboard
+                showLeaderboard();
+                
+                // Cambiar a pantalla de resultados
+                showScreen('resultsScreen');
+                
+                console.log('✅ Resultados mostrados correctamente');
+                
+                // Intentar guardar en Firebase en segundo plano
+                setTimeout(async () => {
+                    try {
+                        await savePlayerToFirebase(currentPlayer);
+                        await updateGlobalStats();
+                        showLeaderboard(); // Actualizar leaderboard con datos de Firebase
+                        console.log('✅ Datos sincronizados con Firebase');
+                    } catch (error) {
+                        console.log('⚠️ No se pudo sincronizar con Firebase:', error);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('❌ Error en showResultsSync:', error);
+                alert('Error mostrando resultados. Tu puntuación: ' + currentPlayer.score);
             }
-            
-            // Mostrar leaderboard actualizado
-            showLeaderboard();
-            
-            showScreen('resultsScreen');
+        }
+
+        async function showResults() {
+            try {
+                console.log('🏆 Mostrando resultados...');
+                
+                // Intentar guardar en Firebase
+                try {
+                    currentPlayer.id = await savePlayerToFirebase(currentPlayer);
+                    await updateGlobalStats();
+                } catch (error) {
+                    console.log('⚠️ Error con Firebase, usando localStorage:', error);
+                    // Fallback a localStorage
+                    saveToLocalStorage(currentPlayer);
+                    loadFromLocalStorage();
+                }
+
+                // Mostrar puntuación final
+                document.getElementById('finalScore').textContent = currentPlayer.score;
+                
+                // Mostrar cupón si la puntuación es alta
+                if (currentPlayer.score >= 1000) {
+                    document.getElementById('winnerSection').style.display = 'block';
+                } else {
+                    document.getElementById('winnerSection').style.display = 'none';
+                }
+                
+                // Mostrar leaderboard
+                try {
+                    showLeaderboard();
+                } catch (error) {
+                    console.log('Error mostrando leaderboard:', error);
+                }
+                
+                // Cambiar a pantalla de resultados
+                showScreen('resultsScreen');
+                
+                console.log('✅ Resultados mostrados correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error en showResults:', error);
+                
+                // Como último recurso, mostrar resultados básicos
+                document.getElementById('finalScore').textContent = currentPlayer.score;
+                showScreen('resultsScreen');
+                alert('Resultados mostrados. Puntuación: ' + currentPlayer.score);
+            }
         }
 
         function showAdmin() {
@@ -700,21 +772,41 @@
         }
 
         function showLeaderboard() {
-            const leaderboardDiv = document.getElementById('leaderboard');
-            if (!leaderboardDiv) return;
-            
-            leaderboardDiv.innerHTML = '<h3>🏆 Top 10 Jugadores</h3>';
-            const topPlayers = allPlayers.slice(0, 10);
-            
-            topPlayers.forEach((player, index) => {
-                const playerDiv = document.createElement('div');
-                playerDiv.className = 'player-item';
-                playerDiv.innerHTML = `
-                    <span>${index + 1}. ${player.avatar} ${player.name}</span>
-                    <span>${player.score} pts</span>
-                `;
-                leaderboardDiv.appendChild(playerDiv);
-            });
+            try {
+                const leaderboardDiv = document.getElementById('leaderboard');
+                if (!leaderboardDiv) {
+                    console.log('⚠️ Elemento leaderboard no encontrado');
+                    return;
+                }
+                
+                leaderboardDiv.innerHTML = '<h3>🏆 Top 10 Jugadores</h3>';
+                
+                if (!allPlayers || allPlayers.length === 0) {
+                    leaderboardDiv.innerHTML += '<p>No hay jugadores registrados aún.</p>';
+                    return;
+                }
+                
+                const topPlayers = allPlayers.slice(0, 10);
+                
+                topPlayers.forEach((player, index) => {
+                    try {
+                        const playerDiv = document.createElement('div');
+                        playerDiv.className = 'player-item';
+                        playerDiv.innerHTML = `
+                            <span>${index + 1}. ${player.avatar || '🚗'} ${player.name || 'Jugador'}</span>
+                            <span>${player.score || 0} pts</span>
+                        `;
+                        leaderboardDiv.appendChild(playerDiv);
+                    } catch (error) {
+                        console.log('Error agregando jugador al leaderboard:', error);
+                    }
+                });
+                
+                console.log(`✅ Leaderboard mostrado con ${topPlayers.length} jugadores`);
+                
+            } catch (error) {
+                console.error('❌ Error en showLeaderboard:', error);
+            }
         }
 
         function showAdminLeaderboard() {
@@ -789,23 +881,29 @@
         
         // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 Iniciando Trivia GM con Firebase...');
+            console.log('🚀 Iniciando Trivia GM...');
             
             // Cargar datos iniciales
             try {
                 await updateGlobalStats();
                 console.log('✅ Datos cargados exitosamente');
                 
-                // Mostrar mensaje de conexión
                 if (gameStats.totalPlayers > 0) {
                     console.log(`📊 ${gameStats.totalPlayers} jugadores registrados`);
                 }
             } catch (error) {
-                console.log('⚠️ Usando modo offline:', error);
-                // Cargar datos locales como fallback
+                console.log('⚠️ Firebase no disponible, usando modo offline:', error);
                 loadFromLocalStorage();
             }
+            
+            console.log('✅ Aplicación inicializada correctamente');
         });
+        
+        // Función de debug para probar showResults
+        function debugShowResults() {
+            console.log('🔧 Debug: Probando showResults...');
+            showResults();
+        }
     </script>
 </body>
 </html>
