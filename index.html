@@ -3,81 +3,597 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trivia General Motors - ¡FUNCIONANDO!</title>
+    <title>Trivia General Motors</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 50px 20px;
-            min-height: 100vh;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
+            padding: 2rem;
+            text-align: center;
         }
-        
-        h1 {
+
+        .logo {
             font-size: 3rem;
-            margin-bottom: 20px;
+            margin-bottom: 1rem;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-        
-        .success {
-            background: rgba(46, 204, 113, 0.2);
-            border: 2px solid #2ecc71;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 30px 0;
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
-        
+
+        .welcome-screen {
+            display: block;
+        }
+
+        .game-screen, .admin-screen {
+            display: none;
+        }
+
         .btn {
-            background: #3498db;
+            background: linear-gradient(45deg, #3498db, #2980b9);
             color: white;
+            border: none;
             padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 10px;
+            border-radius: 50px;
             font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
             margin: 10px;
-            display: inline-block;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
+
         .btn:hover {
-            background: #2980b9;
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            margin: 1rem 0;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin: 10px 0;
+        }
+
+        .avatar-selection {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .avatar {
+            font-size: 2rem;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .avatar:hover, .avatar.selected {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.2);
+        }
+
+        .question-container {
+            text-align: left;
+        }
+
+        .question {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .answers {
+            display: grid;
+            gap: 15px;
+            margin: 2rem 0;
+        }
+
+        .answer-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .answer-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .answer-btn.correct {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: #2ecc71;
+        }
+
+        .answer-btn.incorrect {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f39c12;
+            margin: 1rem 0;
+        }
+
+        .score {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .leaderboard {
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .coupon {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            border: 3px dashed white;
+        }
+
+        .admin-panel {
+            text-align: left;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .answers {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎮 Trivia General Motors</h1>
-        
-        <div class="success">
-            <h2>🎉 ¡DEPLOYMENT EXITOSO!</h2>
-            <p>La aplicación está funcionando correctamente</p>
+        <!-- Pantalla de Bienvenida -->
+        <div id="welcomeScreen" class="welcome-screen">
+            <h1 class="logo">🏎️ Trivia General Motors</h1>
+            
+            <div class="card">
+                <h2>¡Bienvenido al Trivia de GM!</h2>
+                <p>Pon a prueba tus conocimientos sobre la historia de General Motors</p>
+                
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="Ingresa tu nombre" maxlength="20">
+                </div>
+                
+                <div class="avatar-selection">
+                    <div class="avatar" data-avatar="🚗" onclick="selectAvatar('🚗')">🚗</div>
+                    <div class="avatar" data-avatar="🏎️" onclick="selectAvatar('🏎️')">🏎️</div>
+                    <div class="avatar" data-avatar="🚙" onclick="selectAvatar('🚙')">🚙</div>
+                    <div class="avatar" data-avatar="🚐" onclick="selectAvatar('🚐')">🚐</div>
+                    <div class="avatar" data-avatar="🛻" onclick="selectAvatar('🛻')">🛻</div>
+                </div>
+                
+                <button class="btn" onclick="startGame()">Comenzar Juego</button>
+                <button class="btn" onclick="showAdmin()">Panel Administrador</button>
+            </div>
         </div>
-        
-        <p><strong>Características del juego:</strong></p>
-        <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
-            <li>✅ 15 preguntas sobre General Motors</li>
-            <li>✅ Historia de GM en Norteamérica y México</li>
-            <li>✅ Panel de administrador</li>
-            <li>✅ Sistema de puntuación</li>
-            <li>✅ Cupón digital Hummer EV para el ganador</li>
-        </ul>
-        
-        <div style="margin-top: 40px;">
-            <h3>🚀 Estado: ACTIVO</h3>
-            <p>Plataforma: Netlify</p>
-            <p>Fecha: <span id="date"></span></p>
+
+        <!-- Pantalla del Juego -->
+        <div id="gameScreen" class="game-screen">
+            <div class="card">
+                <div class="score">
+                    Puntuación: <span id="playerScore">0</span>
+                </div>
+                <div class="timer" id="timer">30</div>
+                
+                <div class="question-container">
+                    <div class="question" id="questionText"></div>
+                    <div class="answers" id="answersContainer"></div>
+                </div>
+                
+                <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">Siguiente Pregunta</button>
+                <button class="btn" onclick="showResults()" id="finishBtn" style="display: none;">Ver Resultados</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="resultsScreen" class="game-screen">
+            <div class="card">
+                <h2>🏆 Resultados Finales</h2>
+                <div class="score">
+                    Tu puntuación final: <span id="finalScore">0</span>
+                </div>
+                
+                <div id="winnerSection" style="display: none;">
+                    <div class="coupon">
+                        <h3>🎉 ¡FELICIDADES!</h3>
+                        <p>Has ganado un cupón digital para el Hummer EV</p>
+                        <p><strong>Código:</strong> HUMMER-EV-2024</p>
+                        <p><small>Válido hasta diciembre 2024</small></p>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="resetGame()">Jugar de Nuevo</button>
+                <button class="btn" onclick="showWelcome()">Volver al Inicio</button>
+            </div>
+        </div>
+
+        <!-- Panel de Administrador -->
+        <div id="adminScreen" class="admin-screen">
+            <div class="card">
+                <h2>🔐 Panel de Administrador</h2>
+                
+                <div id="adminLogin">
+                    <div class="input-group">
+                        <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
+                    </div>
+                    <button class="btn" onclick="adminLogin()">Acceder</button>
+                    <button class="btn" onclick="showWelcome()">Volver</button>
+                </div>
+                
+                <div id="adminPanel" class="admin-panel" style="display: none;">
+                    <h3>Estadísticas del Juego</h3>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h4>Jugadores Totales</h4>
+                            <div id="totalPlayers">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Puntuación Promedio</h4>
+                            <div id="avgScore">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Mejor Puntuación</h4>
+                            <div id="bestScore">0</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="resetStats()">Reiniciar Estadísticas</button>
+                    <button class="btn" onclick="showWelcome()">Volver al Inicio</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('date').textContent = new Date().toLocaleString('es-MX');
+        // Preguntas de trivia sobre General Motors
+        const questions = [
+            {
+                question: "¿En qué año fue fundada General Motors?",
+                answers: ["1905", "1908", "1910", "1912"],
+                correct: 1,
+                explanation: "General Motors fue fundada el 16 de septiembre de 1908 por William Crapo Durant en Flint, Michigan."
+            },
+            {
+                question: "¿Cuál fue la primera marca adquirida por GM?",
+                answers: ["Chevrolet", "Buick", "Cadillac", "Oldsmobile"],
+                correct: 1,
+                explanation: "Buick fue la primera marca adquirida por GM en 1908, siendo la base sobre la cual Durant construyó el imperio GM."
+            },
+            {
+                question: "¿En qué año comenzó GM sus operaciones en México?",
+                answers: ["1935", "1937", "1940", "1945"],
+                correct: 1,
+                explanation: "General Motors comenzó sus operaciones en México en 1937 con una planta de ensamblaje en la Ciudad de México."
+            },
+            {
+                question: "¿Cuál es el modelo más vendido de Chevrolet en México?",
+                answers: ["Aveo", "Spark", "Onix", "Beat"],
+                correct: 2,
+                explanation: "El Chevrolet Onix se ha convertido en el modelo más vendido de la marca en México desde su lanzamiento."
+            },
+            {
+                question: "¿Qué significan las siglas GMC?",
+                answers: ["General Motors Company", "General Motors Corporation", "General Motor Cars", "General Motors Commercial"],
+                correct: 1,
+                explanation: "GMC originalmente significaba General Motors Corporation, aunque ahora se refiere a General Motors Company."
+            },
+            {
+                question: "¿En qué ciudad mexicana se encuentra la planta más grande de GM en el país?",
+                answers: ["Ramos Arizpe", "Silao", "Toluca", "San Luis Potosí"],
+                correct: 0,
+                explanation: "La planta de Ramos Arizpe, Coahuila, es la más grande de GM en México y produce varios modelos para el mercado global."
+            },
+            {
+                question: "¿Cuál fue el primer auto eléctrico moderno de GM?",
+                answers: ["Volt", "Bolt", "EV1", "Spark EV"],
+                correct: 2,
+                explanation: "El EV1, lanzado en 1996, fue el primer auto eléctrico moderno de GM, aunque tuvo una producción limitada."
+            },
+            {
+                question: "¿Qué marca de GM es conocida como 'el estándar del mundo'?",
+                answers: ["Chevrolet", "Buick", "Cadillac", "GMC"],
+                correct: 2,
+                explanation: "Cadillac adoptó el eslogan 'Standard of the World' (El Estándar del Mundo) para posicionarse como marca de lujo."
+            },
+            {
+                question: "¿En qué año GM se declaró en bancarrota en Estados Unidos?",
+                answers: ["2008", "2009", "2010", "2011"],
+                correct: 1,
+                explanation: "GM se declaró en bancarrota el 1 de junio de 2009 durante la crisis financiera global."
+            },
+            {
+                question: "¿Cuál es la pickup más vendida de GM en México?",
+                answers: ["Silverado", "Colorado", "S-10", "Cheyenne"],
+                correct: 0,
+                explanation: "La Chevrolet Silverado es la pickup más popular de GM en el mercado mexicano."
+            },
+            {
+                question: "¿Qué modelo de Chevrolet se fabricó en la planta de Toluca por más de 30 años?",
+                answers: ["Tsuru", "Sentra", "No se fabricó ningún Chevrolet", "Cavalier"],
+                correct: 2,
+                explanation: "La planta de Toluca históricamente produjo modelos de Nissan, no de Chevrolet. GM tiene otras plantas en México."
+            },
+            {
+                question: "¿Cuál es la SUV más grande que GM vende en México?",
+                answers: ["Tahoe", "Suburban", "Traverse", "Acadia"],
+                correct: 1,
+                explanation: "La Chevrolet Suburban es la SUV más grande de GM disponible en el mercado mexicano."
+            },
+            {
+                question: "¿En qué año GM introdujo el sistema de seguridad OnStar?",
+                answers: ["1995", "1996", "1997", "1998"],
+                correct: 1,
+                explanation: "GM introdujo OnStar en 1996 como un sistema de seguridad y comunicación para sus vehículos."
+            },
+            {
+                question: "¿Cuál fue el primer auto con transmisión automática de GM?",
+                answers: ["Oldsmobile 88", "Cadillac Series 60", "Buick Roadmaster", "Chevrolet Bel Air"],
+                correct: 0,
+                explanation: "El Oldsmobile 88 de 1940 fue el primer auto de GM con transmisión automática Hydra-Matic."
+            },
+            {
+                question: "¿Qué porcentaje aproximado del mercado automotriz mexicano tiene GM?",
+                answers: ["15%", "18%", "22%", "25%"],
+                correct: 1,
+                explanation: "GM mantiene aproximadamente un 18% de participación en el mercado automotriz mexicano."
+            }
+        ];
+
+        // Variables del juego
+        let currentPlayer = { name: "", avatar: "🚗", score: 0 };
+        let currentQuestion = 0;
+        let gameTimer;
+        let timeLeft = 30;
+        let selectedAvatar = "🚗";
+
+        // Estadísticas
+        let gameStats = JSON.parse(localStorage.getItem('gmTriviaStats')) || {
+            totalPlayers: 0,
+            totalScore: 0,
+            bestScore: 0
+        };
+
+        function selectAvatar(avatar) {
+            document.querySelectorAll('.avatar').forEach(a => a.classList.remove('selected'));
+            document.querySelector(`[data-avatar="${avatar}"]`).classList.add('selected');
+            selectedAvatar = avatar;
+        }
+
+        function startGame() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                alert('Por favor ingresa tu nombre');
+                return;
+            }
+
+            currentPlayer = { name, avatar: selectedAvatar, score: 0 };
+            currentQuestion = 0;
+            showScreen('gameScreen');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const question = questions[currentQuestion];
+            document.getElementById('questionText').textContent = `${currentQuestion + 1}. ${question.question}`;
+            document.getElementById('playerScore').textContent = currentPlayer.score;
+            
+            const container = document.getElementById('answersContainer');
+            container.innerHTML = '';
+            
+            question.answers.forEach((answer, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = answer;
+                btn.onclick = () => selectAnswer(index);
+                container.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 30;
+            document.getElementById('timer').textContent = timeLeft;
+            
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(gameTimer);
+                    selectAnswer(-1); // Tiempo agotado
+                }
+            }, 1000);
+        }
+
+        function selectAnswer(selectedIndex) {
+            clearInterval(gameTimer);
+            
+            const question = questions[currentQuestion];
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons.forEach((btn, index) => {
+                if (index === question.correct) {
+                    btn.classList.add('correct');
+                } else if (index === selectedIndex) {
+                    btn.classList.add('incorrect');
+                }
+                btn.disabled = true;
+            });
+
+            if (selectedIndex === question.correct) {
+                const timeBonus = Math.max(0, timeLeft * 10);
+                currentPlayer.score += 100 + timeBonus;
+            }
+
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion >= questions.length) {
+                    document.getElementById('finishBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('nextBtn').style.display = 'inline-block';
+                }
+            }, 2000);
+        }
+
+        function nextQuestion() {
+            document.getElementById('nextBtn').style.display = 'none';
+            loadQuestion();
+        }
+
+        function showResults() {
+            // Actualizar estadísticas
+            gameStats.totalPlayers++;
+            gameStats.totalScore += currentPlayer.score;
+            gameStats.bestScore = Math.max(gameStats.bestScore, currentPlayer.score);
+            localStorage.setItem('gmTriviaStats', JSON.stringify(gameStats));
+
+            document.getElementById('finalScore').textContent = currentPlayer.score;
+            
+            // Mostrar cupón si la puntuación es alta
+            if (currentPlayer.score >= 1000) {
+                document.getElementById('winnerSection').style.display = 'block';
+            }
+            
+            showScreen('resultsScreen');
+        }
+
+        function showAdmin() {
+            showScreen('adminScreen');
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'admin123GM') {
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                updateAdminStats();
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function updateAdminStats() {
+            document.getElementById('totalPlayers').textContent = gameStats.totalPlayers;
+            document.getElementById('avgScore').textContent = gameStats.totalPlayers > 0 ? 
+                Math.round(gameStats.totalScore / gameStats.totalPlayers) : 0;
+            document.getElementById('bestScore').textContent = gameStats.bestScore;
+        }
+
+        function resetStats() {
+            gameStats = { totalPlayers: 0, totalScore: 0, bestScore: 0 };
+            localStorage.setItem('gmTriviaStats', JSON.stringify(gameStats));
+            updateAdminStats();
+            alert('Estadísticas reiniciadas');
+        }
+
+        function resetGame() {
+            currentPlayer = { name: "", avatar: "🚗", score: 0 };
+            currentQuestion = 0;
+            showScreen('welcomeScreen');
+            document.getElementById('playerName').value = '';
+        }
+
+        function showWelcome() {
+            showScreen('welcomeScreen');
+            document.getElementById('adminLogin').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.welcome-screen, .game-screen, .admin-screen').forEach(screen => {
+                screen.style.display = 'none';
+            });
+            document.getElementById(screenId).style.display = 'block';
+        }
+
+        // Seleccionar avatar por defecto
+        selectAvatar('🚗');
     </script>
 </body>
 </html>
