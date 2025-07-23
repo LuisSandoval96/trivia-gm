@@ -13,7 +13,7 @@
   "description": "Interactive General Motors trivia game with real-time multiplayer functionality, admin dashboard, and winner rewards system.",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.1.0",
+    "express": "^4.19.2",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"
   },
