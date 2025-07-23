@@ -10,8 +10,3 @@ services:
         value: production
       - key: ADMIN_PASSWORD
         value: admin123GM
-      - key: PORT
-        fromService:
-          type: web
-          name: trivia-gm
-          property: port
