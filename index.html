@@ -6,28 +6,85 @@
     <title>Trivia General Motors</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    <script>
+        // API para almacenar datos compartidos (funciona sin configuración)
+        const API_BASE = 'https://api.jsonbin.io/v3/b';
+        const BIN_ID = '673e8f2bad19ca34f8d4c5a2'; // ID público para demo
+        const API_KEY = '$2a$10$N8vD9.VVgezjGMyFq4c/2eKYF6w.5JRq4G6GJ5QLj6vhJo8Z1Z.k2'; // Key público para demo
         
-        // Configuración de Firebase (usaremos una configuración pública para demo)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDemoKey123456789",
-            authDomain: "trivia-gm-demo.firebaseapp.com",
-            projectId: "trivia-gm-demo",
-            storageBucket: "trivia-gm-demo.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:demo123456789"
+        // Funciones para manejar datos compartidos
+        window.sharedDataAPI = {
+            async savePlayer(player) {
+                try {
+                    const currentData = await this.loadAllData();
+                    currentData.players.push({
+                        ...player,
+                        id: Date.now().toString(),
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Actualizar estadísticas
+                    currentData.stats.totalPlayers = currentData.players.length;
+                    currentData.stats.totalScore = currentData.players.reduce((sum, p) => sum + p.score, 0);
+                    currentData.stats.bestScore = Math.max(...currentData.players.map(p => p.score));
+                    
+                    await fetch(`${API_BASE}/${BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY
+                        },
+                        body: JSON.stringify(currentData)
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    console.log('Error guardando jugador:', error);
+                    return false;
+                }
+            },
+            
+            async loadAllData() {
+                try {
+                    const response = await fetch(`${API_BASE}/${BIN_ID}/latest`, {
+                        headers: {
+                            'X-Master-Key': API_KEY
+                        }
+                    });
+                    const data = await response.json();
+                    return data.record || {
+                        players: [],
+                        stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
+                    };
+                } catch (error) {
+                    console.log('Error cargando datos:', error);
+                    return {
+                        players: [],
+                        stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
+                    };
+                }
+            },
+            
+            async resetAllData() {
+                try {
+                    await fetch(`${API_BASE}/${BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY
+                        },
+                        body: JSON.stringify({
+                            players: [],
+                            stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
+                        })
+                    });
+                    return true;
+                } catch (error) {
+                    console.log('Error reiniciando datos:', error);
+                    return false;
+                }
+            }
         };
-        
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // Hacer disponibles las funciones globalmente
-        window.firebaseDB = db;
-        window.firebaseUtils = { collection, addDoc, getDocs, updateDoc, doc, query, orderBy, limit };
     </script>
     
     <style>
@@ -463,77 +520,56 @@
             bestScore: 0
         };
 
-        // Funciones de Firebase
-        async function savePlayerToFirebase(player) {
+        // Funciones para manejar datos compartidos
+        async function savePlayerToCloud(player) {
             try {
-                const { collection, addDoc } = window.firebaseUtils;
-                const docRef = await addDoc(collection(window.firebaseDB, "players"), {
-                    name: player.name,
-                    avatar: player.avatar,
-                    score: player.score,
-                    timestamp: new Date(),
-                    completedGame: true
-                });
-                return docRef.id;
+                const success = await window.sharedDataAPI.savePlayer(player);
+                if (success) {
+                    console.log('✅ Jugador guardado en la nube');
+                    return true;
+                } else {
+                    throw new Error('API failed');
+                }
             } catch (error) {
-                console.log("Error guardando jugador (usando localStorage):", error);
-                // Fallback a localStorage si Firebase falla
+                console.log('⚠️ Error guardando en la nube, usando localStorage:', error);
                 saveToLocalStorage(player);
-                return null;
+                return false;
             }
         }
 
-        async function loadPlayersFromFirebase() {
+        async function loadPlayersFromCloud() {
             try {
-                const { collection, getDocs, query, orderBy } = window.firebaseUtils;
-                const q = query(collection(window.firebaseDB, "players"), orderBy("score", "desc"));
-                const querySnapshot = await getDocs(q);
+                const data = await window.sharedDataAPI.loadAllData();
+                allPlayers = data.players.sort((a, b) => b.score - a.score);
+                gameStats = data.stats;
                 
-                allPlayers = [];
-                let totalScore = 0;
-                let bestScore = 0;
-                
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    allPlayers.push({
-                        id: doc.id,
-                        ...data
-                    });
-                    totalScore += data.score;
-                    bestScore = Math.max(bestScore, data.score);
-                });
-
-                gameStats = {
-                    totalPlayers: allPlayers.length,
-                    totalScore: totalScore,
-                    bestScore: bestScore
-                };
-
+                console.log(`✅ Cargados ${allPlayers.length} jugadores de la nube`);
                 return allPlayers;
             } catch (error) {
-                console.log("Error cargando jugadores (usando localStorage):", error);
-                // Fallback a localStorage si Firebase falla
+                console.log('⚠️ Error cargando de la nube, usando localStorage:', error);
                 return loadFromLocalStorage();
             }
         }
 
         async function updateGlobalStats() {
             try {
-                await loadPlayersFromFirebase();
-                updateAdminStats();
+                await loadPlayersFromCloud();
+                console.log(`📊 Stats: ${gameStats.totalPlayers} jugadores, mejor: ${gameStats.bestScore}`);
             } catch (error) {
-                console.log("Error actualizando estadísticas:", error);
+                console.log('Error actualizando estadísticas:', error);
+                loadFromLocalStorage();
             }
         }
 
         // Funciones de fallback con localStorage
         function saveToLocalStorage(player) {
             let players = JSON.parse(localStorage.getItem('gmTriviaPlayers')) || [];
-            players.push({
+            const newPlayer = {
                 ...player,
-                timestamp: new Date(),
+                timestamp: new Date().toISOString(),
                 id: Date.now().toString()
-            });
+            };
+            players.push(newPlayer);
             localStorage.setItem('gmTriviaPlayers', JSON.stringify(players));
             
             let stats = JSON.parse(localStorage.getItem('gmTriviaStats')) || {
@@ -541,10 +577,13 @@
                 totalScore: 0,
                 bestScore: 0
             };
-            stats.totalPlayers++;
-            stats.totalScore += player.score;
-            stats.bestScore = Math.max(stats.bestScore, player.score);
+            stats.totalPlayers = players.length;
+            stats.totalScore = players.reduce((sum, p) => sum + p.score, 0);
+            stats.bestScore = Math.max(...players.map(p => p.score));
             localStorage.setItem('gmTriviaStats', JSON.stringify(stats));
+            
+            allPlayers = players.sort((a, b) => b.score - a.score);
+            gameStats = stats;
         }
 
         function loadFromLocalStorage() {
@@ -555,7 +594,7 @@
                 bestScore: 0
             };
             
-            allPlayers = players;
+            allPlayers = players.sort((a, b) => b.score - a.score);
             gameStats = stats;
             return players;
         }
@@ -654,13 +693,20 @@
         }
 
         // Función síncrona para mostrar resultados (más confiable)
-        function showResultsSync() {
+        async function showResultsSync() {
             try {
-                console.log('🏆 Mostrando resultados (modo síncrono)...');
+                console.log('🏆 Mostrando resultados (guardando en la nube)...');
                 
-                // Guardar en localStorage directamente
-                saveToLocalStorage(currentPlayer);
-                loadFromLocalStorage();
+                // Guardar en la nube primero
+                const cloudSuccess = await savePlayerToCloud(currentPlayer);
+                
+                // Si no funcionó la nube, usar localStorage
+                if (!cloudSuccess) {
+                    saveToLocalStorage(currentPlayer);
+                }
+                
+                // Cargar todos los datos actualizados
+                await updateGlobalStats();
                 
                 // Mostrar puntuación final
                 document.getElementById('finalScore').textContent = currentPlayer.score;
@@ -672,29 +718,26 @@
                     document.getElementById('winnerSection').style.display = 'none';
                 }
                 
-                // Mostrar leaderboard
+                // Mostrar leaderboard actualizado
                 showLeaderboard();
                 
                 // Cambiar a pantalla de resultados
                 showScreen('resultsScreen');
                 
                 console.log('✅ Resultados mostrados correctamente');
-                
-                // Intentar guardar en Firebase en segundo plano
-                setTimeout(async () => {
-                    try {
-                        await savePlayerToFirebase(currentPlayer);
-                        await updateGlobalStats();
-                        showLeaderboard(); // Actualizar leaderboard con datos de Firebase
-                        console.log('✅ Datos sincronizados con Firebase');
-                    } catch (error) {
-                        console.log('⚠️ No se pudo sincronizar con Firebase:', error);
-                    }
-                }, 100);
+                console.log(`📊 Total jugadores: ${gameStats.totalPlayers}, Mejor puntuación: ${gameStats.bestScore}`);
                 
             } catch (error) {
                 console.error('❌ Error en showResultsSync:', error);
-                alert('Error mostrando resultados. Tu puntuación: ' + currentPlayer.score);
+                
+                // Fallback completo
+                saveToLocalStorage(currentPlayer);
+                loadFromLocalStorage();
+                document.getElementById('finalScore').textContent = currentPlayer.score;
+                showLeaderboard();
+                showScreen('resultsScreen');
+                
+                alert('Resultados guardados localmente. Puntuación: ' + currentPlayer.score);
             }
         }
 
@@ -702,16 +745,11 @@
             try {
                 console.log('🏆 Mostrando resultados...');
                 
-                // Intentar guardar en Firebase
-                try {
-                    currentPlayer.id = await savePlayerToFirebase(currentPlayer);
-                    await updateGlobalStats();
-                } catch (error) {
-                    console.log('⚠️ Error con Firebase, usando localStorage:', error);
-                    // Fallback a localStorage
-                    saveToLocalStorage(currentPlayer);
-                    loadFromLocalStorage();
-                }
+                // Guardar jugador en la nube
+                const cloudSuccess = await savePlayerToCloud(currentPlayer);
+                
+                // Actualizar estadísticas globales
+                await updateGlobalStats();
 
                 // Mostrar puntuación final
                 document.getElementById('finalScore').textContent = currentPlayer.score;
@@ -723,12 +761,8 @@
                     document.getElementById('winnerSection').style.display = 'none';
                 }
                 
-                // Mostrar leaderboard
-                try {
-                    showLeaderboard();
-                } catch (error) {
-                    console.log('Error mostrando leaderboard:', error);
-                }
+                // Mostrar leaderboard actualizado
+                showLeaderboard();
                 
                 // Cambiar a pantalla de resultados
                 showScreen('resultsScreen');
@@ -739,9 +773,11 @@
                 console.error('❌ Error en showResults:', error);
                 
                 // Como último recurso, mostrar resultados básicos
+                saveToLocalStorage(currentPlayer);
+                loadFromLocalStorage();
                 document.getElementById('finalScore').textContent = currentPlayer.score;
+                showLeaderboard();
                 showScreen('resultsScreen');
-                alert('Resultados mostrados. Puntuación: ' + currentPlayer.score);
             }
         }
 
@@ -782,7 +818,7 @@
                 leaderboardDiv.innerHTML = '<h3>🏆 Top 10 Jugadores</h3>';
                 
                 if (!allPlayers || allPlayers.length === 0) {
-                    leaderboardDiv.innerHTML += '<p>No hay jugadores registrados aún.</p>';
+                    leaderboardDiv.innerHTML += '<p style="text-align: center; opacity: 0.7; margin: 1rem 0;">No hay jugadores registrados aún.</p>';
                     return;
                 }
                 
@@ -792,8 +828,18 @@
                     try {
                         const playerDiv = document.createElement('div');
                         playerDiv.className = 'player-item';
+                        
+                        // Destacar si es el jugador actual
+                        const isCurrentPlayer = player.name === currentPlayer.name && player.score === currentPlayer.score;
+                        if (isCurrentPlayer) {
+                            playerDiv.style.background = 'rgba(52, 152, 219, 0.3)';
+                            playerDiv.style.border = '2px solid #3498db';
+                        }
+                        
+                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                        
                         playerDiv.innerHTML = `
-                            <span>${index + 1}. ${player.avatar || '🚗'} ${player.name || 'Jugador'}</span>
+                            <span>${medal} ${player.avatar || '🚗'} ${player.name || 'Jugador'} ${isCurrentPlayer ? '(TÚ)' : ''}</span>
                             <span>${player.score || 0} pts</span>
                         `;
                         leaderboardDiv.appendChild(playerDiv);
@@ -804,51 +850,118 @@
                 
                 console.log(`✅ Leaderboard mostrado con ${topPlayers.length} jugadores`);
                 
+                // Mostrar mensaje si el jugador actual está en el top 3
+                if (allPlayers.length > 0) {
+                    const currentPlayerPosition = allPlayers.findIndex(p => 
+                        p.name === currentPlayer.name && p.score === currentPlayer.score
+                    );
+                    
+                    if (currentPlayerPosition === 0) {
+                        const winnerMsg = document.createElement('div');
+                        winnerMsg.style.cssText = 'background: linear-gradient(45deg, #f39c12, #e67e22); padding: 1rem; border-radius: 10px; margin: 1rem 0; text-align: center; font-weight: bold;';
+                        winnerMsg.innerHTML = '🎉 ¡ERES EL LÍDER ACTUAL! 🎉';
+                        leaderboardDiv.appendChild(winnerMsg);
+                    } else if (currentPlayerPosition <= 2) {
+                        const topMsg = document.createElement('div');
+                        topMsg.style.cssText = 'background: rgba(46, 204, 113, 0.3); padding: 1rem; border-radius: 10px; margin: 1rem 0; text-align: center; font-weight: bold;';
+                        topMsg.innerHTML = `🏆 ¡Estás en el TOP ${currentPlayerPosition + 1}! 🏆`;
+                        leaderboardDiv.appendChild(topMsg);
+                    }
+                }
+                
             } catch (error) {
                 console.error('❌ Error en showLeaderboard:', error);
             }
         }
 
         function showAdminLeaderboard() {
-            const adminLeaderboard = document.getElementById('adminLeaderboard');
-            if (!adminLeaderboard) return;
-            
-            adminLeaderboard.innerHTML = '<h4>📊 Todos los Jugadores</h4>';
-            
-            allPlayers.forEach((player, index) => {
-                const playerDiv = document.createElement('div');
-                playerDiv.className = 'player-item';
-                const date = new Date(player.timestamp?.toDate ? player.timestamp.toDate() : player.timestamp);
-                playerDiv.innerHTML = `
-                    <div>
-                        <span>${player.avatar} ${player.name}</span>
-                        <small style="display: block; opacity: 0.7;">${date.toLocaleString('es-MX')}</small>
-                    </div>
-                    <span>${player.score} pts</span>
-                `;
-                adminLeaderboard.appendChild(playerDiv);
-            });
+            try {
+                const adminLeaderboard = document.getElementById('adminLeaderboard');
+                if (!adminLeaderboard) return;
+                
+                adminLeaderboard.innerHTML = '<h4>📊 Todos los Jugadores</h4>';
+                
+                if (!allPlayers || allPlayers.length === 0) {
+                    adminLeaderboard.innerHTML += '<p style="text-align: center; opacity: 0.7; margin: 1rem 0;">No hay jugadores registrados.</p>';
+                    return;
+                }
+                
+                allPlayers.forEach((player, index) => {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.className = 'player-item';
+                    
+                    let date = 'Fecha no disponible';
+                    try {
+                        if (player.timestamp) {
+                            const dateObj = new Date(player.timestamp);
+                            date = dateObj.toLocaleString('es-MX');
+                        }
+                    } catch (e) {
+                        console.log('Error parseando fecha:', e);
+                    }
+                    
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                    
+                    playerDiv.innerHTML = `
+                        <div>
+                            <span>${medal} ${player.avatar || '🚗'} ${player.name || 'Jugador'}</span>
+                            <small style="display: block; opacity: 0.7;">${date}</small>
+                        </div>
+                        <span style="font-weight: bold;">${player.score || 0} pts</span>
+                    `;
+                    adminLeaderboard.appendChild(playerDiv);
+                });
+                
+                console.log(`✅ Admin leaderboard mostrado con ${allPlayers.length} jugadores`);
+                
+            } catch (error) {
+                console.error('❌ Error en showAdminLeaderboard:', error);
+            }
         }
 
         async function resetStats() {
-            if (!confirm('¿Estás seguro de que quieres reiniciar todas las estadísticas? Esta acción no se puede deshacer.')) {
+            if (!confirm('¿Estás seguro de que quieres reiniciar todas las estadísticas? Esta acción eliminará todos los jugadores registrados y no se puede deshacer.')) {
                 return;
             }
             
             try {
-                // En una implementación real, aquí eliminaríamos todos los documentos de Firebase
-                // Por ahora, solo limpiamos localStorage como fallback
+                console.log('🔄 Reiniciando estadísticas...');
+                
+                // Reiniciar en la nube
+                const success = await window.sharedDataAPI.resetAllData();
+                
+                if (success) {
+                    console.log('✅ Datos reiniciados en la nube');
+                } else {
+                    throw new Error('Error reiniciando en la nube');
+                }
+                
+                // También limpiar localStorage
                 localStorage.removeItem('gmTriviaPlayers');
                 localStorage.removeItem('gmTriviaStats');
                 
+                // Resetear variables locales
                 gameStats = { totalPlayers: 0, totalScore: 0, bestScore: 0 };
                 allPlayers = [];
                 
+                // Actualizar interfaz
                 updateAdminStats();
                 showAdminLeaderboard();
-                alert('Estadísticas reiniciadas (solo localStorage por ahora)');
+                
+                alert('✅ Todas las estadísticas han sido reiniciadas exitosamente');
+                
             } catch (error) {
-                alert('Error al reiniciar estadísticas');
+                console.error('❌ Error reiniciando estadísticas:', error);
+                
+                // Fallback: solo limpiar localStorage
+                localStorage.removeItem('gmTriviaPlayers');
+                localStorage.removeItem('gmTriviaStats');
+                gameStats = { totalPlayers: 0, totalScore: 0, bestScore: 0 };
+                allPlayers = [];
+                updateAdminStats();
+                showAdminLeaderboard();
+                
+                alert('⚠️ Estadísticas reiniciadas localmente (error con la nube)');
             }
         }
 
