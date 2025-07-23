@@ -368,7 +368,7 @@
                 <div class="score">
                     Puntuación: <span id="playerScore">0</span>
                 </div>
-                <div class="timer" id="timer">30</div>
+                <div class="timer" id="timer">10</div>
                 
                 <div class="question-container">
                     <div class="question" id="questionText"></div>
@@ -555,10 +555,10 @@
         ];
 
         // Variables del juego
-        let currentPlayer = { name: "", avatar: "🚗", score: 0, id: null };
+        let currentPlayer = { name: "", avatar: "🚗", score: 0, id: null, correctAnswers: 0 };
         let currentQuestion = 0;
         let gameTimer;
-        let timeLeft = 30;
+        let timeLeft = 10; // Reducido de 30 a 10 segundos
         let selectedAvatar = "🚗";
         let allPlayers = [];
 
@@ -673,7 +673,7 @@
                 return;
             }
 
-            currentPlayer = { name, avatar: selectedAvatar, score: 0 };
+            currentPlayer = { name, avatar: selectedAvatar, score: 0, correctAnswers: 0 };
             currentQuestion = 0;
             showScreen('gameScreen');
             loadQuestion();
@@ -704,7 +704,7 @@
         }
 
         function startTimer() {
-            timeLeft = 30;
+            timeLeft = 10; // Cambiado de 30 a 10 segundos
             document.getElementById('timer').textContent = timeLeft;
             
             gameTimer = setInterval(() => {
@@ -733,9 +733,11 @@
                 btn.disabled = true;
             });
 
+            // Calcular puntos y respuestas correctas
             if (selectedIndex === question.correct) {
                 const timeBonus = Math.max(0, timeLeft * 10);
                 currentPlayer.score += 100 + timeBonus;
+                currentPlayer.correctAnswers++; // Contar respuesta correcta
             }
 
             setTimeout(() => {
@@ -769,14 +771,33 @@
                 // Cargar todos los datos actualizados
                 await updateGlobalStats();
                 
-                // Mostrar puntuación final
+                // Mostrar puntuación final y respuestas correctas
                 document.getElementById('finalScore').textContent = currentPlayer.score;
                 
-                // Mostrar cupón si la puntuación es alta
-                if (currentPlayer.score >= 1000) {
-                    document.getElementById('winnerSection').style.display = 'block';
+                // Nueva lógica: Cupón solo para 10+ respuestas correctas
+                const winnerSection = document.getElementById('winnerSection');
+                if (currentPlayer.correctAnswers >= 10) {
+                    winnerSection.style.display = 'block';
+                    // Actualizar el cupón con información específica
+                    winnerSection.innerHTML = `
+                        <div class="coupon">
+                            <h3>🎉 ¡FELICIDADES!</h3>
+                            <p>Has ganado un cupón digital para el Hummer EV</p>
+                            <p><strong>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</strong></p>
+                            <p><strong>Código:</strong> HUMMER-EV-2024</p>
+                            <p><small>Válido hasta diciembre 2024</small></p>
+                        </div>
+                    `;
                 } else {
-                    document.getElementById('winnerSection').style.display = 'none';
+                    winnerSection.style.display = 'block';
+                    winnerSection.innerHTML = `
+                        <div style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); padding: 2rem; border-radius: 15px; margin: 2rem 0; border: 3px dashed white;">
+                            <h3>🎈 ¡Gracias por participar!</h3>
+                            <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
+                            <p><strong>Necesitas 10+ respuestas correctas para el cupón Hummer EV</strong></p>
+                            <p><small>¡Inténtalo de nuevo para mejorar tu resultado!</small></p>
+                        </div>
+                    `;
                 }
                 
                 // Mostrar leaderboard actualizado
@@ -785,8 +806,7 @@
                 // Cambiar a pantalla de resultados
                 showScreen('resultsScreen');
                 
-                console.log('✅ Resultados mostrados correctamente');
-                console.log(`📊 Total jugadores: ${gameStats.totalPlayers}, Mejor puntuación: ${gameStats.bestScore}`);
+                console.log(`✅ Resultados: ${currentPlayer.correctAnswers}/15 correctas, ${currentPlayer.score} puntos`);
                 
             } catch (error) {
                 console.error('❌ Error en showResultsSync:', error);
@@ -798,7 +818,7 @@
                 showLeaderboard();
                 showScreen('resultsScreen');
                 
-                alert('Resultados guardados localmente. Puntuación: ' + currentPlayer.score);
+                alert(`Resultados guardados. ${currentPlayer.correctAnswers}/15 correctas, ${currentPlayer.score} puntos`);
             }
         }
 
@@ -815,11 +835,29 @@
                 // Mostrar puntuación final
                 document.getElementById('finalScore').textContent = currentPlayer.score;
                 
-                // Mostrar cupón si la puntuación es alta
-                if (currentPlayer.score >= 1000) {
-                    document.getElementById('winnerSection').style.display = 'block';
+                // Nueva lógica: Cupón basado en respuestas correctas
+                const winnerSection = document.getElementById('winnerSection');
+                if (currentPlayer.correctAnswers >= 10) {
+                    winnerSection.style.display = 'block';
+                    winnerSection.innerHTML = `
+                        <div class="coupon">
+                            <h3>🎉 ¡FELICIDADES!</h3>
+                            <p>Has ganado un cupón digital para el Hummer EV</p>
+                            <p><strong>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</strong></p>
+                            <p><strong>Código:</strong> HUMMER-EV-2024</p>
+                            <p><small>Válido hasta diciembre 2024</small></p>
+                        </div>
+                    `;
                 } else {
-                    document.getElementById('winnerSection').style.display = 'none';
+                    winnerSection.style.display = 'block';
+                    winnerSection.innerHTML = `
+                        <div style="background: linear-gradient(45deg, #95a5a6, #7f8c8d); padding: 2rem; border-radius: 15px; margin: 2rem 0; border: 3px dashed white;">
+                            <h3>🎈 ¡Gracias por participar!</h3>
+                            <p>Respondiste ${currentPlayer.correctAnswers}/15 preguntas correctamente</p>
+                            <p><strong>Necesitas 10+ respuestas correctas para el cupón Hummer EV</strong></p>
+                            <p><small>¡Inténtalo de nuevo para mejorar tu resultado!</small></p>
+                        </div>
+                    `;
                 }
                 
                 // Mostrar leaderboard actualizado
@@ -828,7 +866,7 @@
                 // Cambiar a pantalla de resultados
                 showScreen('resultsScreen');
                 
-                console.log('✅ Resultados mostrados correctamente');
+                console.log(`✅ Resultados: ${currentPlayer.correctAnswers}/15 correctas, ${currentPlayer.score} puntos`);
                 
             } catch (error) {
                 console.error('❌ Error en showResults:', error);
@@ -901,7 +939,10 @@
                         
                         playerDiv.innerHTML = `
                             <span>${medal} ${player.avatar || '🚗'} ${player.name || 'Jugador'} ${isCurrentPlayer ? '(TÚ)' : ''}</span>
-                            <span>${player.score || 0} pts</span>
+                            <div style="text-align: right;">
+                                <div>${player.score || 0} pts</div>
+                                <small style="opacity: 0.7;">${player.correctAnswers || 0}/15 correctas</small>
+                            </div>
                         `;
                         leaderboardDiv.appendChild(playerDiv);
                     } catch (error) {
@@ -994,7 +1035,11 @@
                                 ${date} ${player.device ? `(${player.device})` : ''}
                             </small>
                         </div>
-                        <span style="font-weight: bold;">${player.score || 0} pts</span>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold;">${player.score || 0} pts</div>
+                            <small>${player.correctAnswers || 0}/15 correctas</small>
+                            ${(player.correctAnswers >= 10) ? '<small style="color: #f39c12;">🏆 GANADOR</small>' : '<small style="color: #95a5a6;">Participante</small>'}
+                        </div>
                     `;
                     adminLeaderboard.appendChild(playerDiv);
                 });
@@ -1065,7 +1110,7 @@
         }
 
         function resetGame() {
-            currentPlayer = { name: "", avatar: "🚗", score: 0, id: null };
+            currentPlayer = { name: "", avatar: "🚗", score: 0, id: null, correctAnswers: 0 };
             currentQuestion = 0;
             showScreen('welcomeScreen');
             document.getElementById('playerName').value = '';
