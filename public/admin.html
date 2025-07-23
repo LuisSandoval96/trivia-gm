@@ -74,6 +74,29 @@
 
                 <div class="players-panel">
                     <h2>👥 Jugadores Conectados</h2>
+                    
+                    <!-- Panel de diagnóstico Firebase -->
+                    <div class="info-card">
+                        <h3>🔥 Estado Firebase</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Conexión:</label>
+                                <span id="firebase-status">Verificando...</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Modo:</label>
+                                <span id="data-mode">Local</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Jugadores en Firebase:</label>
+                                <span id="firebase-players">0</span>
+                            </div>
+                        </div>
+                        <button id="test-firebase-btn" class="admin-btn" style="margin-top: 10px;">
+                            🔄 Probar Firebase
+                        </button>
+                    </div>
+                    
                     <div id="players-list" class="players-list">
                         <div class="no-players">
                             <span>No hay jugadores conectados</span>

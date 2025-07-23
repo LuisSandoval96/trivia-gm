@@ -6,37 +6,63 @@
     <title>Trivia General Motors</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <script>
         // API simplificada usando GitHub Gist como base de datos
         const GIST_ID = '8f4e6d2c1a9b3e5f7g8h9i0j1k2l3m4n'; // ID de demo
         const GITHUB_TOKEN = 'ghp_demo123456789'; // Token de demo
         
-        // Sistema de base de datos local con sincronización opcional
+        // Sistema híbrido: Firebase Real Database + localStorage como respaldo
         window.sharedDataAPI = {
             async savePlayer(player) {
                 try {
                     // Siempre guardar localmente primero
                     this.saveToLocalDB(player);
                     
-                    // Intentar guardar en la nube (opcional)
-                    console.log('💾 Jugador guardado localmente');
+                    // Intentar Firebase si está disponible
+                    if (window.isFirebaseAvailable && window.isFirebaseAvailable()) {
+                        console.log('🔥 Intentando guardar en Firebase...');
+                        const result = await window.firebaseAPI.savePlayer(player);
+                        if (result.success) {
+                            console.log('✅ Jugador guardado en Firebase y localStorage');
+                            return true;
+                        }
+                    }
+                    
+                    console.log('💾 Jugador guardado solo en localStorage');
                     return true;
                 } catch (error) {
-                    console.log('Error guardando jugador:', error);
-                    return false;
+                    console.log('❌ Error guardando jugador:', error);
+                    // Fallback a localStorage
+                    this.saveToLocalDB(player);
+                    return true;
                 }
             },
             
             async loadAllData() {
                 try {
-                    // Cargar de localStorage mejorado
+                    // Intentar cargar desde Firebase primero
+                    if (window.isFirebaseAvailable && window.isFirebaseAvailable()) {
+                        console.log('🔥 Cargando desde Firebase...');
+                        const players = await window.firebaseAPI.loadAllPlayers();
+                        const stats = await window.firebaseAPI.loadGlobalStats();
+                        
+                        if (players.length > 0) {
+                            console.log('✅ Datos cargados desde Firebase:', players.length, 'jugadores');
+                            return { players, stats };
+                        }
+                    }
+                    
+                    // Fallback a localStorage
+                    console.log('💾 Cargando desde localStorage...');
                     return this.loadFromLocalDB();
                 } catch (error) {
-                    console.log('Error cargando datos:', error);
-                    return {
-                        players: [],
-                        stats: { totalPlayers: 0, totalScore: 0, bestScore: 0 }
-                    };
+                    console.log('❌ Error cargando datos:', error);
+                    return this.loadFromLocalDB();
                 }
             },
             
@@ -90,6 +116,45 @@
                 // Mantener compatibilidad con localStorage anterior
                 localStorage.setItem('gmTriviaPlayers', JSON.stringify(data.players));
                 localStorage.setItem('gmTriviaStats', JSON.stringify(data.stats));
+            },
+            
+            async enableRealTimeSync() {
+                try {
+                    if (window.isFirebaseAvailable && window.isFirebaseAvailable()) {
+                        console.log('🔥 Activando sincronización en tiempo real...');
+                        
+                        // Escuchar cambios en el leaderboard
+                        window.firebaseAPI.onPlayersUpdate((players) => {
+                            console.log('🔄 Datos actualizados desde Firebase:', players.length, 'jugadores');
+                            
+                            // Actualizar leaderboard automáticamente si existe la función
+                            if (typeof updateLeaderboardDisplay === 'function') {
+                                updateLeaderboardDisplay(players);
+                            }
+                        });
+                        
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.log('❌ Error activando sync en tiempo real:', error);
+                    return false;
+                }
+            },
+            
+            async testFirebaseConnection() {
+                try {
+                    if (window.isFirebaseAvailable && window.isFirebaseAvailable()) {
+                        const connected = await window.firebaseAPI.testConnection();
+                        console.log('🔥 Estado Firebase:', connected ? 'Conectado ✅' : 'Desconectado ❌');
+                        return connected;
+                    }
+                    console.log('🔥 Firebase no disponible');
+                    return false;
+                } catch (error) {
+                    console.log('❌ Error verificando Firebase:', error);
+                    return false;
+                }
             },
             
             async resetAllData() {
@@ -1138,7 +1203,18 @@
         
         // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 Iniciando Trivia GM...');
+            console.log('🚀 Iniciando Trivia GM con Firebase...');
+            
+            // Verificar conexión Firebase
+            const firebaseConnected = await window.sharedDataAPI.testFirebaseConnection();
+            
+            if (firebaseConnected) {
+                console.log('🔥 Firebase conectado - Modo sincronizado');
+                // Activar sincronización en tiempo real
+                await window.sharedDataAPI.enableRealTimeSync();
+            } else {
+                console.log('💾 Firebase no disponible - Modo offline');
+            }
             
             // Cargar datos iniciales
             try {
